@@ -1,0 +1,28 @@
+# Local configuration and credentials
+**/.env
+!.env.example
+**/.env.*
+!**/.env.example
+
+# SQLite databases and sidecar files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# JavaScript dependencies and build outputs
+node_modules/
+client/build/
+npm-debug.log*
+
+# Editor settings
+.vscode/
+.idea/

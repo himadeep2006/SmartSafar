@@ -1,0 +1,7 @@
+import React from "react";
+
+const slots = ["morning", "afternoon", "evening"];
+export default function ItineraryView({ days = [] }) {
+  if (!days.length) return <p className="text-slate-300">No itinerary is available yet.</p>;
+  return <div className="space-y-5">{days.map((day) => <article key={day.day_number} className="rounded-2xl border border-white/12 bg-slate-950/45 p-4 sm:p-6"><div className="mb-4 flex flex-wrap items-start justify-between gap-3"><h3 className="text-lg font-bold text-white sm:text-xl">{day.title}</h3><span className="rounded-full border border-amber-300/20 bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-200">~₹{day.estimated_daily_spending_inr.toLocaleString("en-IN")} / day</span></div><div className="grid gap-3 lg:grid-cols-3">{slots.map((slot) => { const item = day[slot]; return <section key={slot} className="rounded-xl border border-white/10 bg-white/[0.035] p-4"><p className="text-xs font-bold uppercase tracking-widest text-sky-300">{slot}</p><h4 className="mt-2 font-semibold text-white">{item.title}</h4><p className="mt-2 text-sm leading-relaxed text-slate-300">{item.description}</p><p className="mt-3 text-xs text-slate-400">{item.place}</p><p className="mt-2 text-xs text-slate-400">{item.estimated_travel_time}</p><p className="mt-3 border-t border-white/10 pt-3 text-xs text-slate-300">{item.meal_suggestion}</p></section>; })}</div><p className="mt-4 text-xs leading-relaxed text-slate-400">{day.travel_notes}</p></article>)}</div>;
+}

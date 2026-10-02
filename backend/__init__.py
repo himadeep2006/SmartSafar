@@ -1,0 +1,1 @@
+"""SmartSafar FastAPI backend."""

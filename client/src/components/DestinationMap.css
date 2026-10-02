@@ -1,0 +1,36 @@
+.destination-map .leaflet-container {
+  height: 100%;
+  width: 100%;
+  background: #0b1329;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  z-index: 0;
+}
+
+.destination-map .leaflet-control-zoom a {
+  background: rgba(11, 19, 41, 0.94);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.destination-map .leaflet-control-attribution {
+  background: rgba(7, 12, 24, 0.82);
+  color: #cbd5e1;
+}
+
+.destination-map .leaflet-control-attribution a { color: #7dd3fc; }
+.destination-map .leaflet-popup-content-wrapper,
+.destination-map .leaflet-popup-tip { background: #0b1329; color: #fff; }
+.destination-map .leaflet-popup-content { margin: 12px 16px; }
+
+.smartsafar-map-marker { background: transparent; border: 0; }
+.smartsafar-map-marker span {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 3px;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: #1685f4;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .55), 0 0 0 5px rgba(22, 133, 244, .25);
+  transform: rotate(-45deg);
+}

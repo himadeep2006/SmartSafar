@@ -1,0 +1,4 @@
+/* App-wide layout only. Brand colors and surfaces are defined in index.css. */
+#root {
+  min-height: 100vh;
+}
