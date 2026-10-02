@@ -1,4 +1,6 @@
 from datetime import datetime
+import re
+from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, SecretStr, field_validator, model_validator
 
@@ -82,6 +84,76 @@ class DestinationPublic(BaseModel):
 
 class SavedDestinationPublic(DestinationPublic):
     saved_at: datetime
+
+
+SUPPORTED_LANGUAGES = ("English", "Hindi", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali", "Marathi")
+
+
+class ProfileUpdate(BaseModel):
+    display_name: str = Field(min_length=1, max_length=80)
+    phone: str | None = Field(default=None, max_length=20)
+    home_city: str | None = Field(default=None, max_length=80)
+    preferred_language: Literal["English", "Hindi", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali", "Marathi"] = "English"
+    travel_interests: str = Field(default="", max_length=500)
+    travel_preferences: dict[str, bool] = Field(default_factory=dict)
+
+    @field_validator("display_name", "home_city", "travel_interests")
+    @classmethod
+    def trim_profile_text(cls, value):
+        if value is None:
+            return value
+        return value.strip()
+
+    @field_validator("display_name")
+    @classmethod
+    def require_name(cls, value):
+        if not value.strip():
+            raise ValueError("Display name is required.")
+        return value.strip()
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value):
+        if value is None or not value.strip():
+            return None
+        normalized = value.strip()
+        if not re.fullmatch(r"\+?[0-9][0-9 ()-]{6,18}[0-9]", normalized):
+            raise ValueError("Enter a valid phone number.")
+        return normalized
+
+
+class ProfilePublic(ProfileUpdate):
+    email: EmailStr
+    username: str
+
+
+class EmergencyContactCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    phone: str = Field(min_length=8, max_length=20)
+
+    @field_validator("name")
+    @classmethod
+    def valid_contact_name(cls, value):
+        if not value.strip():
+            raise ValueError("Contact name is required.")
+        return value.strip()
+
+    @field_validator("phone")
+    @classmethod
+    def valid_contact_phone(cls, value):
+        value = value.strip()
+        if not re.fullmatch(r"\+?[0-9][0-9 ()-]{6,18}[0-9]", value):
+            raise ValueError("Enter a valid phone number.")
+        return value
+
+
+class EmergencyContactPublic(EmergencyContactCreate):
+    id: int
+
+
+class NearbyServicesRequest(BaseModel):
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
 
 
 from datetime import date

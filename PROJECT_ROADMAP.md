@@ -24,17 +24,19 @@ This roadmap reflects the repository as inspected on 2026-10-01. Completed phase
 - Planner limitation: no generative AI provider or paid API is configured. The current provider protocol uses a deterministic, credential-free planner with curated destination stops and traveler-editable preferences. It is clearly identified as preference-based; stop access, hours, route estimates, and actual costs are not live or guaranteed.
 - Verification: focused frontend/backend tests, frontend production build, backend API tests, and the protected browser route plus live generation preview were exercised. See `AGENTS.md` for commands and current architecture.
 
-## Phase 4 — Safety and language tools
+## Phase 4 — Safety, languages, and profile (implementation complete; verification pending)
 
-- Build a safety center with clearly sourced guidance and nearby emergency-service lookup using appropriate open data, map display, and freshness/error handling.
-- Add emergency contacts and an SOS experience only with honest disclosure of what the browser/device can actually do; do not imply dispatch without integration.
-- Replace placeholder language output with a defined phrasebook and a verified translation/speech approach; make offline/static phrase content useful without external APIs.
+- Protected profile APIs persist display name, optional phone/home city, supported preferred language, and travel notes/preferences in a user-owned profile row. Account email/username are read-only; password hashes are never returned.
+- Safety contacts are protected CRUD records scoped to the JWT user. The SOS UI is explicit and honest: SmartSafar does not dispatch alerts or transmit location; the user confirms before choosing `tel:112`.
+- Nearby emergency lookup requests browser location only after the user's action, sends coordinates in a validated authenticated POST body (not logged in the URL), makes a one-shot free OpenStreetMap Overpass query, displays returned records on Leaflet, and clearly marks coverage/availability as unverified with retrieval time. Coordinates are not persisted. Static travel guidance and the Government of India ERSS source are presented separately from live lookup.
+- Languages provides a curated starter phrasebook for English, Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, and Marathi across seven categories. Language preference shares persistent profile storage; search, category filtering, copy, and clear static-data/no-machine-translation disclosure are included.
+- Verification is in progress; only mark Phase 4 complete after the feature flows, existing phases, backend/frontend tests, production build, browser and responsive checks pass. No Phase 5 work is in scope.
 
 ## Phase 5 — Travel assistant and product polish
 
 - Add an assistant grounded in the user's trip and destination context, with explicit provider configuration and graceful unavailable states.
 - Finish responsive/accessibility review, coherent navigation, empty/loading/error states, security/privacy review, and focused automated checks for critical flows.
-- Persist profile and travel preferences against the authenticated user; the existing Profile form still uses local-only behavior and is not yet backed by the account API.
+- Continue broader app-wide polish, accessibility, and responsive review after Phase 4 verification.
 
 ## Completion criteria
 

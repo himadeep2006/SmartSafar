@@ -1,150 +1,81 @@
-import React, { useState } from 'react';
-import { FaVolumeUp, FaCopy, FaDownload, FaLanguage } from 'react-icons/fa';
-import PageContainer from '../components/PageContainer';
-import SectionHeader from '../components/SectionHeader';
-import Card from '../components/Card';
-import Button from '../components/Button';
-import Badge from '../components/Badge';
+import React, { useEffect, useMemo, useState } from "react";
+import { FaCopy, FaLanguage, FaSearch } from "react-icons/fa";
+import PageContainer from "../components/PageContainer";
+import Card from "../components/Card";
+import Button from "../components/Button";
+import LoadingState from "../components/LoadingState";
+import EmptyState from "../components/EmptyState";
+import { getProfile, updateProfile } from "../services/phase4Service";
+import { TRAVEL_LANGUAGES, TRAVEL_PHRASES } from "../data/travelPhrases";
+
+const CATEGORIES = ["All", ...new Set(TRAVEL_PHRASES.map(({ category }) => category))];
 
 export default function Languages() {
-  const [selectedLanguage, setSelectedLanguage] = useState('Hindi');
-  const [textToTranslate, setTextToTranslate] = useState('My name is Vaishnavi');
-  const [translatedText, setTranslatedText] = useState('Hindi: [Hindi translation] नमस्ते — My name is Vaishnavi');
+  const [profile, setProfile] = useState(null);
+  const [language, setLanguage] = useState("English");
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("All");
+  const [state, setState] = useState("loading");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState("");
 
-  const languages = [
-    { name: 'English', symbol: 'A' },
-    { name: 'Hindi', symbol: 'हि' },
-    { name: 'Tamil', symbol: 'த' },
-    { name: 'Telugu', symbol: 'తె' },
-    { name: 'Bengali', symbol: 'অ' },
-    { name: 'Marathi', symbol: 'अ' },
-    { name: 'Gujarati', symbol: 'ગુ' },
-    { name: 'Kannada', symbol: 'ಕ' },
-    { name: 'Malayalam', symbol: 'മ' },
-    { name: 'Punjabi', symbol: 'ਅ' },
-    { name: 'Odia', symbol: 'ଓ' },
-    { name: 'Urdu', symbol: 'ا' },
-  ];
+  useEffect(() => {
+    getProfile().then((data) => { setProfile(data); setLanguage(data.preferred_language); setState("ready"); })
+      .catch(() => { setError("Your saved language preference could not be loaded."); setState("error"); });
+  }, []);
 
-  const handleTranslate = () => {
-    setTranslatedText(
-      `${selectedLanguage}: [${selectedLanguage} translation] — ${textToTranslate}`
-    );
-  };
+  const phrases = useMemo(() => TRAVEL_PHRASES.filter((phrase) =>
+    (category === "All" || phrase.category === category) &&
+    `${phrase.english} ${phrase.translations[language] || ""}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+  ), [category, language, query]);
 
-  const handleSpeak = () => {
-    alert(`Speaking in ${selectedLanguage}: "${translatedText}"`);
-  };
+  async function selectLanguage(next) {
+    if (next === language || !profile) return;
+    setSaving(true); setError(""); setFeedback("");
+    try {
+      const saved = await updateProfile({ ...profile, preferred_language: next });
+      setProfile(saved); setLanguage(saved.preferred_language); setFeedback(`${next} saved as your preferred language.`);
+    } catch (err) { setError(err.response?.data?.detail || "Could not save your preferred language."); }
+    finally { setSaving(false); }
+  }
 
-  return (
-    <PageContainer
-      title="Regional Language Companion"
-      subtitle="Connect seamlessly with local communities across India in their native language"
-      badge="12+ INDIAN LANGUAGES SUPPORTED"
-    >
-      {/* Language Selection Grid */}
-      <div>
-        <SectionHeader
-          title="Select Your Language"
-          subtitle="Choose from India's major regional languages"
-          icon={<FaLanguage />}
-        />
+  async function copyPhrase(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setFeedback("Phrase copied to clipboard.");
+    } catch { setFeedback("Clipboard access is unavailable. Select and copy the phrase manually."); }
+  }
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {languages.map((lang) => {
-            const isSelected = selectedLanguage === lang.name;
-            return (
-              <button
-                key={lang.name}
-                onClick={() => setSelectedLanguage(lang.name)}
-                className={`p-4 rounded-2xl transition-all duration-200 border text-center backdrop-blur-md ${
-                  isSelected
-                    ? 'border-amber-400 bg-amber-500/15 shadow-gold-glow scale-105'
-                    : 'border-white/10 bg-slate-900/60 hover:border-amber-400/50 hover:bg-slate-900/80'
-                }`}
-              >
-                <div className={`text-3xl font-extrabold mb-1.5 ${
-                  isSelected ? 'text-amber-400' : 'text-slate-300'
-                }`}>
-                  {lang.symbol}
-                </div>
-                <p className={`text-xs font-bold uppercase tracking-wider ${
-                  isSelected ? 'text-amber-300' : 'text-slate-400'
-                }`}>
-                  {lang.name}
-                </p>
-              </button>
-            );
-          })}
+  if (state === "loading") return <PageContainer title="Travel Phrasebook" subtitle="Useful words for getting around India"><LoadingState message="Loading your preferred language…" /></PageContainer>;
+  if (state === "error") return <PageContainer title="Travel Phrasebook" subtitle="Useful words for getting around India"><Card variant="glass"><p role="alert" className="text-rose-200">{error}</p><Button className="mt-4" onClick={() => window.location.reload()}>Retry</Button></Card></PageContainer>;
+
+  return <PageContainer title="Travel Phrasebook" subtitle="Curated phrases for common travel moments across India" badge="OFFLINE-FRIENDLY PHRASEBOOK">
+    <Card variant="glass" className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div className="flex-1">
+          <label htmlFor="phrase-language" className="smart-label">Preferred phrase language</label>
+          <select id="phrase-language" value={language} disabled={saving} onChange={(e) => selectLanguage(e.target.value)} className="smart-select max-w-md">
+            {TRAVEL_LANGUAGES.map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
         </div>
+        {saving && <span role="status" className="text-sm text-slate-300">Saving preference…</span>}
       </div>
+      {error && <p role="alert" className="text-rose-200">{error}</p>}
+      {feedback && <p role="status" className="text-sm text-emerald-200">{feedback}</p>}
+      <p className="text-sm text-slate-400">These are curated phrases, not live machine translations. English is retained as your everyday reference.</p>
+    </Card>
 
-      {/* Translation Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Card */}
-        <Card variant="glass" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-white">Enter Text to Translate</h3>
-            <Badge variant="blue" size="sm">INPUT</Badge>
-          </div>
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-4">
+      <label className="relative"><span className="sr-only">Search travel phrases</span><FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input aria-label="Search travel phrases" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search phrases…" className="smart-input pl-11" /></label>
+      <label><span className="sr-only">Filter phrase category</span><select aria-label="Filter phrase category" value={category} onChange={(e) => setCategory(e.target.value)} className="smart-select min-w-52">{CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></label>
+    </div>
 
-          <textarea
-            value={textToTranslate}
-            onChange={(e) => setTextToTranslate(e.target.value)}
-            placeholder="Type your phrase or message here..."
-            rows="6"
-            className="smart-textarea resize-none"
-          />
-
-          <div className="flex gap-3 pt-2">
-            <Button variant="gold" onClick={handleTranslate} fullWidth icon={<FaLanguage />}>
-              Translate
-            </Button>
-            <Button variant="glass" onClick={handleSpeak} fullWidth icon={<FaVolumeUp />}>
-              Speak
-            </Button>
-          </div>
-        </Card>
-
-        {/* Output Card */}
-        <Card variant="glass" className="space-y-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Translation Output</h3>
-              <Badge variant="gold" size="sm">{selectedLanguage.toUpperCase()}</Badge>
-            </div>
-
-            <div className="p-6 bg-slate-950/80 rounded-2xl border border-amber-500/30 min-h-[160px] flex items-center justify-center text-center shadow-inner">
-              <p className="text-amber-200 text-lg leading-relaxed font-medium">
-                {translatedText}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <Button variant="secondary" fullWidth icon={<FaCopy />}>
-              Copy Text
-            </Button>
-            <Button variant="secondary" fullWidth icon={<FaDownload />}>
-              Download Audio
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Language Overview */}
-      <Card variant="solid" className="p-6">
-        <h3 className="text-lg font-bold text-white mb-4">Supported Regional Dialects</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {languages.map((lang) => (
-            <div key={lang.name} className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
-              <span className="text-2xl font-bold text-amber-400 block mb-1">{lang.symbol}</span>
-              <span className="text-xs font-semibold text-slate-300">{lang.name}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </PageContainer>
-  );
+    {!phrases.length ? <EmptyState icon={<FaLanguage />} title="No phrases found" description="Try another search or choose a different category." /> :
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{phrases.map((phrase) => <Card key={phrase.id} variant="glass" className="space-y-4">
+        <div className="flex items-center justify-between gap-3"><span className="text-xs uppercase tracking-widest text-amber-300">{phrase.category}</span><span className="text-xs text-slate-400">{language}</span></div>
+        <div><p className="text-sm text-slate-400">{phrase.english}</p><p className="mt-1 text-xl font-semibold text-white break-words">{phrase.translations[language] || phrase.english}</p></div>
+        <Button variant="glass" size="sm" onClick={() => copyPhrase(phrase.translations[language] || phrase.english)} icon={<FaCopy />} aria-label={`Copy ${phrase.category.toLowerCase()} phrase`}>Copy phrase</Button>
+      </Card>)}</div>}
+  </PageContainer>;
 }
-

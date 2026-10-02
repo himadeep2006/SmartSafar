@@ -11,6 +11,8 @@ from .routes.auth import router as auth_router
 from .routes.destinations import router as destinations_router
 from .routes.saved_destinations import router as saved_destinations_router
 from .routes.trips import router as trips_router
+from .routes.profile import router as profile_router
+from .routes.safety import router as safety_router
 
 settings = get_settings()
 
@@ -25,7 +27,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
@@ -60,3 +62,5 @@ app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 app.include_router(destinations_router, prefix="/api", tags=["destinations"])
 app.include_router(saved_destinations_router, prefix="/api", tags=["saved destinations"])
 app.include_router(trips_router, prefix="/api", tags=["trips and itinerary planning"])
+app.include_router(profile_router, prefix="/api", tags=["profile"])
+app.include_router(safety_router, prefix="/api", tags=["safety"])
