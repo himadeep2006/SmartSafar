@@ -4,7 +4,7 @@ const interests = ["heritage", "nature", "food", "culture", "adventure", "wellne
 const activities = ["walking", "museums", "local food", "markets", "outdoors", "temples", "relaxation", "wildlife"];
 const styles = ["balanced", "relaxed", "adventure", "culture", "food", "budget"];
 
-export default function TripPlannerForm({ destinations, initialDestination = "", initialValues = {}, onSubmit, submitLabel = "Build my itinerary", loading = false, error = "", includeLogistics = true }) {
+export default function TripPlannerForm({ destinations, initialDestination = "", initialValues = {}, onSubmit, submitLabel = "Build my itinerary", loading = false, error = "", includeLogistics = true, includeDestination = true }) {
   const [form, setForm] = useState({ destination_id: initialDestination, duration_days: 3, budget_inr: 15000, travel_style: "balanced", interests: ["culture", "food"], preferred_activities: ["local food"], starting_location: "", companions: 1, start_date: "", title: "", ...initialValues });
   const [validation, setValidation] = useState("");
   useEffect(() => { if (initialDestination && !initialValues.destination_id) setForm((old) => ({ ...old, destination_id: initialDestination })); }, [initialDestination, initialValues.destination_id]);
@@ -23,7 +23,7 @@ export default function TripPlannerForm({ destinations, initialDestination = "",
   const field = "w-full rounded-xl border border-white/15 bg-slate-950/60 px-3.5 py-3 text-white placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30";
   return <form className="space-y-5" onSubmit={submit} noValidate>
     <div className="grid gap-4 sm:grid-cols-2">
-      <label className="space-y-1.5 text-sm text-slate-200 sm:col-span-2">Destination <span className="text-amber-300">*</span><select className={field} value={form.destination_id} onChange={(e) => set("destination_id", e.target.value)} required><option value="">Choose from Explore destinations</option>{destinations.map((destination) => <option key={destination.id} value={destination.id}>{destination.name}, {destination.state}</option>)}</select></label>
+      {includeDestination && <label className="space-y-1.5 text-sm text-slate-200 sm:col-span-2">Destination <span className="text-amber-300">*</span><select className={field} value={form.destination_id} onChange={(e) => set("destination_id", e.target.value)} required><option value="">Choose from Explore destinations</option>{destinations.map((destination) => <option key={destination.id} value={destination.id}>{destination.name}, {destination.state}</option>)}</select></label>}
       <label className="space-y-1.5 text-sm text-slate-200">Days (1–14)<input className={field} type="number" min="1" max="14" value={form.duration_days} onChange={(e) => set("duration_days", e.target.value)} required /></label>
       <label className="space-y-1.5 text-sm text-slate-200">Total budget (₹)<input className={field} type="number" min="1000" max="10000000" step="500" value={form.budget_inr} onChange={(e) => set("budget_inr", e.target.value)} required /></label>
       <label className="space-y-1.5 text-sm text-slate-200">Travel style<select className={field} value={form.travel_style} onChange={(e) => set("travel_style", e.target.value)}>{styles.map((style) => <option key={style} value={style}>{style[0].toUpperCase() + style.slice(1)}</option>)}</select></label>

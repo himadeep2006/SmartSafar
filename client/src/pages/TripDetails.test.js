@@ -28,6 +28,13 @@ test("keeps a stale itinerary until the traveler confirms regeneration", async (
   expect(screen.queryByText(/preferences have changed/i)).not.toBeInTheDocument();
 });
 
+test("does not offer an unsupported destination edit", async () => {
+  render(<MemoryRouter initialEntries={["/trips/7"]}><Routes><Route path="/trips/:tripId" element={<TripDetails/>}/><Route path="/trips" element={<div>My trips</div>}/></Routes></MemoryRouter>);
+  fireEvent.click(await screen.findByRole("button", { name: "Edit trip" }));
+  expect(screen.getByRole("textbox", { name: /trip title/i })).toBeInTheDocument();
+  expect(screen.queryByRole("combobox", { name: /destination/i })).not.toBeInTheDocument();
+});
+
 test("requires an explicit delete confirmation", async () => {
   render(<MemoryRouter initialEntries={["/trips/7"]}><Routes><Route path="/trips/:tripId" element={<TripDetails/>}/><Route path="/trips" element={<div>My trips</div>}/></Routes></MemoryRouter>);
   fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
