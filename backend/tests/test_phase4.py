@@ -93,12 +93,13 @@ def test_nearby_lookup_is_auth_validated_and_returns_source_attribution(client, 
     assert result.json()["retrieved_at"]
 
 
-def test_cors_allows_authenticated_phase4_put_requests(client):
+def test_cors_allows_frontend_origins_on_default_and_fallback_dev_ports(client):
     http, _ = client
-    response = http.options("/api/profile", headers={"Origin": "http://localhost:3000", "Access-Control-Request-Method": "PUT", "Access-Control-Request-Headers": "authorization,content-type"})
-    assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
-    assert "PUT" in response.headers["access-control-allow-methods"]
+    for origin in ("http://localhost:3000", "http://localhost:3001"):
+        response = http.options("/api/profile", headers={"Origin": origin, "Access-Control-Request-Method": "PUT", "Access-Control-Request-Headers": "authorization,content-type"})
+        assert response.status_code == 200
+        assert response.headers["access-control-allow-origin"] == origin
+        assert "PUT" in response.headers["access-control-allow-methods"]
 
 
 def test_nearby_lookup_returns_graceful_unavailable_error(client, monkeypatch):
