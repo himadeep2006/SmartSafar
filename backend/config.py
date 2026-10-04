@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent
@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     database_url: str = f"sqlite:///{(BACKEND_DIR / 'smartsafar.db').as_posix()}"
     cors_origins: str = "http://localhost:3000"
+    translation_provider_url: str | None = None
+    translation_provider_timeout_seconds: float = Field(default=10, ge=1, le=30)
+    ai_provider: str = "groq"
+    ai_api_key: SecretStr | None = None
+    ai_model: str = "openai/gpt-oss-20b"
+    ai_timeout_seconds: float = Field(default=30, ge=1, le=60)
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_DIR / ".env",

@@ -13,6 +13,8 @@ from .routes.saved_destinations import router as saved_destinations_router
 from .routes.trips import router as trips_router
 from .routes.profile import router as profile_router
 from .routes.safety import router as safety_router
+from .routes.translation import router as translation_router
+from .routes.assistant import router as assistant_router
 
 settings = get_settings()
 
@@ -64,3 +66,5 @@ app.include_router(saved_destinations_router, prefix="/api", tags=["saved destin
 app.include_router(trips_router, prefix="/api", tags=["trips and itinerary planning"])
 app.include_router(profile_router, prefix="/api", tags=["profile"])
 app.include_router(safety_router, prefix="/api", tags=["safety"])
+app.include_router(translation_router, prefix="/api", tags=["translation"])
+app.include_router(assistant_router, prefix="/api", tags=["AI travel assistant"])

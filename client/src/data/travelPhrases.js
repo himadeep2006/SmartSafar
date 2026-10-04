@@ -1,4 +1,5 @@
-export const TRAVEL_LANGUAGES = ["English", "Hindi", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali", "Marathi"];
+import { TRAVEL_LANGUAGES } from "./travelLanguages";
+export { TRAVEL_LANGUAGES };
 
 // Curated starter phrases; translations are static travel aids, not machine translation.
 const seed = [

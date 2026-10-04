@@ -9,6 +9,7 @@ import {
   FaBars,
   FaTimes,
   FaSuitcaseRolling,
+  FaRobot,
 } from "react-icons/fa";
 import "./Navbar.css";
 import { useAuth } from "../auth/AuthContext";
@@ -51,6 +52,7 @@ export default function Navbar() {
   const navItems = [
     { label: "Explore", path: "/dashboard", icon: <FaCompass /> },
     { label: "My Trips", path: "/trips", icon: <FaSuitcaseRolling /> },
+    { label: "AI Assistant", path: "/assistant", icon: <FaRobot /> },
     { label: "Languages", path: "/languages", icon: <FaLanguage /> },
     { label: "Safety", path: "/safety", icon: <FaShieldAlt /> },
     { label: "Profile", path: "/profile", icon: <FaUserCircle /> },

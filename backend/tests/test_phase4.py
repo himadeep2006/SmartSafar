@@ -10,6 +10,8 @@ from sqlalchemy.pool import StaticPool
 from backend.app import app
 from backend.database import Base, get_db
 from backend.routes import safety
+from backend.routes import translation
+from backend.services.translation import IndicTrans2HTTPProvider, TranslationProviderError
 
 
 @pytest.fixture()
@@ -109,3 +111,76 @@ def test_nearby_lookup_returns_graceful_unavailable_error(client, monkeypatch):
     response = http.post("/api/safety/nearby", json={"latitude": 12.9, "longitude": 77.6}, headers=owner)
     assert response.status_code == 503
     assert response.json()["detail"] == "OpenStreetMap nearby lookup is temporarily unavailable. Try again later."
+
+
+def test_translation_requires_auth_validates_and_returns_provider_result_without_secrets(client, monkeypatch):
+    http, _ = client
+    owner = account(http, "phase4translation")
+    payload = {"text": "  Where is the railway station?  ", "source_language": "en", "target_language": "hi"}
+    assert http.post("/api/translation/translate", json=payload).status_code == 401
+    assert http.post("/api/translation/translate", headers=owner, json={**payload, "source_language": "xx"}).status_code == 422
+    assert http.post("/api/translation/translate", headers=owner, json={**payload, "target_language": "en"}).status_code == 422
+    assert http.post("/api/translation/translate", headers=owner, json={**payload, "text": " "}).status_code == 422
+    assert http.post("/api/translation/translate", headers=owner, json={**payload, "text": "x" * 501}).status_code == 422
+
+    class Provider:
+        name = "Test IndicTrans2"
+        def translate(self, text, source, target):
+            assert text == "Where is the railway station?"
+            assert (source, target) == ("en", "hi")
+            return "रेलवे स्टेशन कहाँ है?"
+
+    monkeypatch.setattr(translation, "get_translation_provider", lambda: Provider())
+    response = http.post("/api/translation/translate", headers=owner, json=payload)
+    assert response.status_code == 200
+    assert response.json() == {
+        "translation": "रेलवे स्टेशन कहाँ है?",
+        "source_language": "en",
+        "target_language": "hi",
+        "provider": "Test IndicTrans2",
+    }
+    assert "password" not in response.text and "secret" not in response.text
+
+
+def test_translation_provider_unavailable_and_timeout_are_safe(client, monkeypatch):
+    http, _ = client
+    owner = account(http, "phase4translateoffline")
+    monkeypatch.setattr(translation, "get_translation_provider", lambda: None)
+    payload = {"text": "Hello", "source_language": "en", "target_language": "te"}
+    unavailable = http.post("/api/translation/translate", headers=owner, json=payload)
+    assert unavailable.status_code == 503
+    assert unavailable.json() == {"detail": "Translation service is temporarily unavailable."}
+
+    class TimedOutProvider:
+        name = "Test provider"
+        def translate(self, *_args): raise TranslationProviderError("timeout")
+
+    monkeypatch.setattr(translation, "get_translation_provider", lambda: TimedOutProvider())
+    timeout = http.post("/api/translation/translate", headers=owner, json=payload)
+    assert timeout.status_code == 504
+    assert timeout.json() == {"detail": "Translation service is temporarily unavailable."}
+
+
+def test_indictrans2_adapter_sends_only_text_and_language_codes_and_rejects_remote_urls(monkeypatch):
+    captured = {}
+
+    class Response:
+        def __enter__(self): return self
+        def __exit__(self, *_): pass
+        def read(self): return json.dumps({"translation": "வணக்கம்"}).encode()
+
+    def fake_urlopen(request, timeout):
+        captured["payload"] = json.loads(request.data.decode())
+        captured["timeout"] = timeout
+        return Response()
+
+    monkeypatch.setattr("backend.services.translation.urlopen", fake_urlopen)
+    provider = IndicTrans2HTTPProvider("http://127.0.0.1:8100/translate", timeout=3)
+    result = provider.translate("Hello", "en", "ta")
+    assert result == "வணக்கம்"
+    assert captured == {
+        "payload": {"text": "Hello", "source_language": "eng_Latn", "target_language": "tam_Taml"},
+        "timeout": 3,
+    }
+    with pytest.raises(ValueError, match="loopback"):
+        IndicTrans2HTTPProvider("https://public-provider.example/translate")

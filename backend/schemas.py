@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 import re
 from typing import Literal
 
@@ -154,6 +154,98 @@ class EmergencyContactPublic(EmergencyContactCreate):
 class NearbyServicesRequest(BaseModel):
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
+
+
+TRANSLATION_LANGUAGE_CODES = ("en", "hi", "ta", "te", "kn", "ml", "bn", "mr")
+
+
+class TranslationRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=500)
+    source_language: Literal["en", "hi", "ta", "te", "kn", "ml", "bn", "mr"]
+    target_language: Literal["en", "hi", "ta", "te", "kn", "ml", "bn", "mr"]
+
+    @field_validator("text")
+    @classmethod
+    def trim_translation_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Enter text to translate.")
+        return value
+
+    @model_validator(mode="after")
+    def require_different_languages(self):
+        if self.source_language == self.target_language:
+            raise ValueError("Choose two different languages.")
+        return self
+
+
+class TranslationResponse(BaseModel):
+    translation: str
+    source_language: str
+    target_language: str
+    provider: str
+
+
+class AssistantHistoryMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=1200)
+
+    @field_validator("content")
+    @classmethod
+    def trim_history_content(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Conversation messages cannot be blank.")
+        return value
+
+
+class AssistantChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=2000)
+    history: list[AssistantHistoryMessage] = Field(default_factory=list, max_length=8)
+    trip_id: int | None = Field(default=None, ge=1)
+
+    @field_validator("message")
+    @classmethod
+    def trim_assistant_message(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Enter a travel question to continue.")
+        return value
+
+
+class AssistantSuggestion(BaseModel):
+    type: Literal["destination", "trip_plan", "trip"]
+    destination_id: str | None = Field(default=None, max_length=64)
+    days: int | None = Field(default=None, ge=1, le=14)
+    trip_id: int | None = Field(default=None, ge=1)
+
+
+class AssistantTripContext(BaseModel):
+    id: int
+    destination_id: str
+    title: str
+    duration_days: int
+    start_date: date | None
+    itinerary: list[dict]
+    itinerary_stale: bool
+
+
+class AssistantContext(BaseModel):
+    destinations: list[DestinationPublic] = Field(default_factory=list)
+    saved_destinations: list[DestinationPublic] = Field(default_factory=list)
+    trip: AssistantTripContext | None = None
+    preferred_language: str | None = None
+
+
+class AssistantChatResponse(BaseModel):
+    message: str
+    suggestions: list[AssistantSuggestion] = Field(default_factory=list, max_length=4)
+    context: AssistantContext
+
+
+class AssistantStatus(BaseModel):
+    available: bool
+    provider: str | None = None
 
 
 from datetime import date

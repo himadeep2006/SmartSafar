@@ -24,19 +24,22 @@ This roadmap reflects the repository as inspected on 2026-10-01. Completed phase
 - Planner limitation: no generative AI provider or paid API is configured. The current provider protocol uses a deterministic, credential-free planner with curated destination stops and traveler-editable preferences. It is clearly identified as preference-based; stop access, hours, route estimates, and actual costs are not live or guaranteed.
 - Verification: focused frontend/backend tests, frontend production build, backend API tests, and the protected browser route plus live generation preview were exercised. See `AGENTS.md` for commands and current architecture.
 
-## Phase 4 — Safety, languages, and profile (implementation complete; verification pending)
+## Phase 4 — Safety, languages, and profile (complete)
 
 - Protected profile APIs persist display name, optional phone/home city, supported preferred language, and travel notes/preferences in a user-owned profile row. Account email/username are read-only; password hashes are never returned.
 - Safety contacts are protected CRUD records scoped to the JWT user. The SOS UI is explicit and honest: SmartSafar does not dispatch alerts or transmit location; the user confirms before choosing `tel:112`.
 - Nearby emergency lookup requests browser location only after the user's action, sends coordinates in a validated authenticated POST body (not logged in the URL), makes a one-shot free OpenStreetMap Overpass query, displays returned records on Leaflet, and clearly marks coverage/availability as unverified with retrieval time. Coordinates are not persisted. Static travel guidance and the Government of India ERSS source are presented separately from live lookup.
-- Languages provides a curated starter phrasebook for English, Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, and Marathi across seven categories. Language preference shares persistent profile storage; search, category filtering, copy, and clear static-data/no-machine-translation disclosure are included.
-- Verification is in progress; only mark Phase 4 complete after the feature flows, existing phases, backend/frontend tests, production build, browser and responsive checks pass. No Phase 5 work is in scope.
+- Languages keeps the curated seven-category phrasebook and profile-backed preferred phrase language, and adds arbitrary translation controls, session-only two-way conversation, one-shot browser speech input, speech synthesis, swap, and copy for English, Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, and Marathi. Translation uses protected `POST /api/translation/translate`; the optional self-hosted IndicTrans2 adapter is loopback-only, capped at 500 characters, and returns an explicit unavailable response until a compatible local model server is configured. Speech input/output remain browser-native and are not persisted.
+- Verified complete before Phase 5 work began. The optional self-hosted IndicTrans2 runtime remains paused and unavailable unless a compatible loopback model service is configured.
 
-## Phase 5 — Travel assistant and product polish
+## Phase 5 — AI Travel Assistant (IMPLEMENTED; verification incomplete)
 
-- Add an assistant grounded in the user's trip and destination context, with explicit provider configuration and graceful unavailable states.
-- Finish responsive/accessibility review, coherent navigation, empty/loading/error states, security/privacy review, and focused automated checks for critical flows.
-- Continue broader app-wide polish, accessibility, and responsive review after Phase 4 verification.
+- Implemented protected `/assistant` UI and authenticated `/api/assistant/status` and `/api/assistant/chat` endpoints. Optional Groq provider uses a server-only key and structured output; without configuration, the API returns 503 and the UI clearly reports that no answer was generated.
+- Context and navigation actions are restricted to the authenticated user's relevant trip/saved-place context and matched catalogue destinations. Assistant does not persist chat or mutate trips. A mocked-provider regression found and fixed centralized destination-action filtering.
+- Backend verification: all 28 tests pass when run outside the restricted sandbox. The earlier hang was the sandbox blocking the Windows Proactor loopback socketpair, not Python 3.14 incompatibility or project pytest configuration. Frontend verification: 48 tests pass; production build passes.
+- Browser verification: signup/login, session restoration, major routes, and the no-provider assistant send/retry flow were exercised locally. The available browser viewport was about 740 CSS pixels and exposes no viewport override; exact 1440/768/390 responsive checks remain incomplete. Browser console logs were not available through the selected CUA API.
+- No Groq key is configured, so live generated responses and provider data handling remain unverified. Do not enable a paid tier or add a payment method without explicit user approval; review current provider terms before configuration.
+- Phase 5 remains **UNVERIFIED** until exact responsive checks and browser console review are completed; real-provider verification remains pending unless a key is configured.
 
 ## Completion criteria
 

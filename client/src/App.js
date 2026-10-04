@@ -17,6 +17,7 @@ import DestinationDetails from "./pages/DestinationDetails";
 import TripPlanner from "./pages/TripPlanner";
 import Trips from "./pages/Trips";
 import TripDetails from "./pages/TripDetails";
+import Assistant from "./pages/Assistant";
 import Navbar from "./components/Navbar";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import "./App.css";
@@ -60,6 +61,7 @@ function AppContent() {
         <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/destinations/:destinationId" element={<RequireAuth><DestinationDetails /></RequireAuth>} />
         <Route path="/planner" element={<RequireAuth><TripPlanner /></RequireAuth>} />
+        <Route path="/assistant" element={<RequireAuth><Assistant /></RequireAuth>} />
         <Route path="/trips" element={<RequireAuth><Trips /></RequireAuth>} />
         <Route path="/trips/:tripId" element={<RequireAuth><TripDetails /></RequireAuth>} />
         <Route path="/languages" element={<RequireAuth><Languages /></RequireAuth>} />
