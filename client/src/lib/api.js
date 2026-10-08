@@ -12,4 +12,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export function handleApiError(error) {
+  if (error.response?.status === 401 && typeof window !== "undefined") {
+    window.dispatchEvent(new Event("smartsafar:unauthorized"));
+  }
+  return Promise.reject(error);
+}
+
+api.interceptors.response.use((response) => response, handleApiError);
+
 export default api;

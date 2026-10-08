@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
 import api from "./lib/api";
 import * as destinationService from "./services/destinationService";
@@ -91,6 +91,20 @@ test("a saved token is revalidated before a protected route is shown", async () 
 
   expect(await screen.findByRole("heading", { name: /namaste, refreshed-traveller/i })).toBeInTheDocument();
   expect(api.get).toHaveBeenCalledWith("/auth/me");
+});
+
+test("a later unauthorized API response clears the session and returns to login", async () => {
+  localStorage.setItem("token", "server-validated-token");
+  window.history.replaceState(null, "", "/dashboard");
+  api.get.mockResolvedValue({ data: { id: 9, username: "traveller", email: "safe@example.com" } });
+
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: /namaste, traveller/i })).toBeInTheDocument();
+
+  act(() => window.dispatchEvent(new Event("smartsafar:unauthorized")));
+
+  expect(await screen.findByRole("heading", { name: /welcome back/i })).toBeInTheDocument();
+  expect(localStorage.getItem("token")).toBeNull();
 });
 
 test("an unavailable auth service fails closed and lets the user sign out", async () => {

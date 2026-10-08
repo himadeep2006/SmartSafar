@@ -11,6 +11,16 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState("checking");
   const [user, setUser] = useState(null);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      clearStoredToken();
+      setUser(null);
+      setStatus("unauthenticated");
+    };
+    window.addEventListener("smartsafar:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("smartsafar:unauthorized", handleUnauthorized);
+  }, []);
+
   const refreshSession = useCallback(async () => {
     const token = localStorage.getItem("token");
     if (!token) {
